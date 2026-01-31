@@ -51,10 +51,6 @@ ACCESS_TOKEN_EXPIRE_MINUTES=30
 
 **⚠️ IMPORTANTE**: El archivo `.env` está incluido en el repositorio **únicamente porque esto es una prueba técnica**. En un proyecto real, este archivo **NUNCA** debe subirse a Git. Debe estar en `.gitignore` y cada desarrollador debe crear su propio `.env` local basándose en un archivo `.env.example`.
 
-**Nota**: En producción, genera un `SECRET_KEY` seguro con:
-```bash
-openssl rand -hex 32
-```
 
 ### 3. Levantar la Aplicación
 
@@ -448,11 +444,3 @@ La aplicación usa SQLAlchemy para crear tablas automáticamente. Si modificas l
 4. Commit: `git commit -m "Descripción del cambio"`
 5. Push: `git push origin feature/nueva-funcionalidad`
 6. Crea un Pull Request
-
-## Licencia
-
-Este proyecto es parte de una prueba técnica para Talana.
-
-## Contacto
-
-Para preguntas o soporte, contacta a jhomen11@gmail.com.
