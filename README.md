@@ -70,7 +70,6 @@ Este comando:
 Abre tu navegador en:
 - **API**: http://localhost:8000
 - **Documentación Swagger**: http://localhost:8000/docs
-- **ReDoc**: http://localhost:8000/redoc
 
 Deberías ver un mensaje: `"TalaTrivia API is running"`
 
