@@ -44,7 +44,6 @@ def get_trivia_content(
     """
     return service.get_game_details(assignment_id, current_user.id)
 
-# --- AQUÍ ESTÁ EL CAMBIO IMPORTANTE ---
 @router.post(
     "/{assignment_id}/submit", 
     response_model=schemas.GameResult,

@@ -30,7 +30,7 @@ Antes de comenzar, asegúrate de tener instalado:
 ### 1. Clonar el Repositorio
 
 ```bash
-git clone <url-del-repositorio>
+git clone https://github.com/jhomen11/prueba-tec-talana.git
 cd prueba_talana
 ```
 
@@ -78,6 +78,53 @@ Abre tu navegador en:
 
 Deberías ver un mensaje: `"TalaTrivia API is running"`
 
+## Generar Datos de Prueba (Seed)
+
+Para facilitar las pruebas, la aplicación incluye rutas para generar y eliminar datos de ejemplo.
+
+### Crear Datos Completos
+
+```bash
+curl -X POST http://localhost:8000/testing/seed
+```
+
+O desde Swagger UI: `POST /testing/seed`
+
+**Esto crea:**
+- 5 jugadores (ana@talana.com, beto@talana.com, carla@talana.com, diego@talana.com, elena@talana.com)
+  - Contraseña de todos: `123456`
+- 12 preguntas (4 fáciles, 4 medias, 4 difíciles)
+- 3 trivias diferentes con distintas dificultades
+- 6 partidas completadas simuladas con respuestas y puntajes
+
+**Partidas simuladas:**
+- Ana: 3 puntos (1 trivia completada)
+- Beto: 8 puntos (2 trivias completadas) - Líder del ranking
+- Carla: 2 puntos (1 trivia completada)
+- Diego: 7 puntos (2 trivias completadas)
+- Elena: Sin partidas (solo trivias pendientes)
+
+Esto te permite ver datos reales en:
+- `GET /ranking/` - Ranking global con puntajes
+- `GET /game/my-trivias` - Trivias asignadas (login como cualquier jugador)
+- `GET /ranking/my-stats` - Estadísticas personales
+
+### Limpiar Datos de Prueba
+
+```bash
+curl -X DELETE http://localhost:8000/testing/reset
+```
+
+O desde Swagger UI: `DELETE /testing/reset`
+
+**Esto elimina:**
+- Todos los jugadores de prueba
+- Todas las preguntas y opciones
+- Todas las trivias y asignaciones
+- Todas las respuestas
+
+**⚠️ NO elimina:** El usuario admin inicial
+
 ## Uso de la Aplicación
 
 ### Usuario Admin por Defecto
@@ -86,6 +133,16 @@ Al iniciar la aplicación, se crea automáticamente un usuario administrador:
 
 - **Email**: `admin@talana.com`
 - **Password**: `admin123`
+
+### Usuarios de Prueba (después del seed)
+
+Si ejecutaste el seed, puedes usar cualquiera de estos usuarios para probar como jugador:
+
+- **Email**: `ana@talana.com` / **Password**: `123456`
+- **Email**: `beto@talana.com` / **Password**: `123456`
+- **Email**: `carla@talana.com` / **Password**: `123456`
+- **Email**: `diego@talana.com` / **Password**: `123456`
+- **Email**: `elena@talana.com` / **Password**: `123456`
 
 ### Flujo de Trabajo Básico
 
@@ -187,27 +244,63 @@ Cada respuesta individual del usuario en una partida.
 
 ## Ejecutar Tests
 
-La aplicación incluye tests automatizados con pytest:
+La aplicación incluye tests automatizados con pytest. Se implementan dos tipos de tests:
 
-### Ejecutar Todos los Tests
+### Tipos de Tests
+
+#### **Tests de Integración**
+Prueban el flujo completo de la API (HTTP → Base de datos → HTTP). Usan base de datos SQLite en memoria.
+
+**Archivos:**
+- `test_main.py` - Health check
+- `test_auth.py` - Autenticación (signup, login, logout)
+
+#### **Tests Unitarios**
+Prueban funciones aisladas sin base de datos usando mocks. Son mucho más rápidos.
+
+**Archivos:**
+- `test_game_unit.py` - Lógica de negocio del módulo game:
+  - Cálculo de puntaje por dificultad
+  - Validaciones de seguridad (anti-trampa)
+  - Obtención de trivias pendientes
+
+### Comandos de Ejecución
+
+#### Ejecutar Todos los Tests
 
 ```bash
 docker compose exec api pytest tests/ -v
 ```
 
-### Ejecutar Tests con Cobertura
+#### Ejecutar Tests con Cobertura
 
 ```bash
 docker compose exec api pytest tests/ --cov=app --cov-report=html
 ```
 
-El reporte de cobertura se genera en `htmlcov/index.html`
+El reporte HTML se genera en `htmlcov/index.html`. Ábrelo con:
+```bash
+open htmlcov/index.html
+```
 
-### Ejecutar Solo Tests de Autenticación
+#### Ejecutar Solo Tests de Integración
 
 ```bash
 docker compose exec api pytest tests/test_auth.py -v
 ```
+
+#### Ejecutar Solo Tests Unitarios
+
+```bash
+docker compose exec api pytest tests/test_game_unit.py -v
+```
+
+### Resultado Actual
+
+Al ejecutar todos los tests deberías ver:
+- **17 tests pasando** (7 integración + 10 unitarios)
+- Tiempo de ejecución: ~2-3 segundos
+- 1 warning de librería externa (passlib)
 
 ## Estructura del Proyecto
 
@@ -226,15 +319,18 @@ prueba_talana/
 │       ├── questions/         # CRUD de preguntas
 │       ├── trivias/           # CRUD de trivias
 │       ├── game/              # Lógica del juego
-│       └── ranking/           # Sistema de ranking
+│       ├── ranking/           # Sistema de ranking
+│       └── testing/           # Endpoints para generar/limpiar datos de prueba
 ├── tests/
 │   ├── conftest.py            # Fixtures de pytest
 │   ├── test_main.py           # Test de health check
-│   └── test_auth.py           # Tests de autenticación
+│   ├── test_auth.py           # Tests de autenticación (integración)
+│   └── test_game_unit.py      # Tests unitarios del módulo game
 ├── docker-compose.yaml        # Configuración de servicios
 ├── Dockerfile                 # Imagen de la API
 ├── requirements.txt           # Dependencias de Python
-├── .env                       # Variables de entorno
+├── .env                       # Variables de entorno (solo para prueba técnica)
+├── .env.example               # Plantilla de variables de entorno
 └── README.md                  # Este archivo
 ```
 
@@ -322,9 +418,6 @@ docker compose up --build
 ### La API no se conecta a la base de datos
 - Verifica que el contenedor `db` esté saludable: `docker compose ps`
 - Revisa los logs: `docker compose logs db`
-
-### Error de permisos en Docker
-- En Linux/Mac, asegúrate de tener permisos: `sudo usermod -aG docker $USER`
 
 ### Puerto 8000 ya está en uso
 - Cambia el puerto en `docker-compose.yaml`: `"8001:8000"`
